@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System.ComponentModel.DataAnnotations;
 using TaskManager.API.Controllers;
 using TaskManager.API.Data;
 using TaskManager.API.DTOs;
@@ -181,18 +180,6 @@ namespace TaskManager.API.Tests.Controllers
         {
             // Arrange
             var dto = new CreateUserTypeDto { UserType = "" };
-
-            // Manually trigger model validation
-            var validationContext = new ValidationContext(dto);
-            var validationResults = new List<ValidationResult>();
-            Validator.TryValidateObject(dto, validationContext, validationResults, true);
-            
-            foreach (var validationResult in validationResults)
-            {
-                _controller.ModelState.AddModelError(
-                    validationResult.MemberNames.FirstOrDefault() ?? string.Empty,
-                    validationResult.ErrorMessage ?? string.Empty);
-            }
 
             // Act
             var result = await _controller.CreateUserType(dto);
