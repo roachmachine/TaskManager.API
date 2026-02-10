@@ -32,15 +32,15 @@ namespace TaskManager.API.Controllers
         public async Task<ActionResult<PaginatedResponseDto<UserResponseDto>>> GetUsers(
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10,
-            [FromQuery] int? organizationId = null)
+            [FromQuery] int? OrgProgramId = null)
         {
             try
             {
-                var query = _context.Users.AsQueryable();
+                var query = _context.Users.Where(u => !u.IsDeleted);
 
-                if (organizationId.HasValue)
+                if (OrgProgramId.HasValue)
                 {
-                    query = query.Where(u => u.OrganizationId == organizationId);
+                    query = query.Where(u => u.OrgProgramId == OrgProgramId.Value);
                 }
 
                 var total = await query.CountAsync();
@@ -48,7 +48,8 @@ namespace TaskManager.API.Controllers
                     .OrderBy(u => u.UserName)
                     .Skip((pageNumber - 1) * pageSize)
                     .Take(pageSize)
-                    .Include(u => u.Organization)
+                    .Include(u => u.OrgProgram)
+                        .ThenInclude(op => op!.Organization)
                     .Include(u => u.UserType)
                     .ToListAsync();
 
@@ -58,25 +59,25 @@ namespace TaskManager.API.Controllers
                     UserName = u.UserName,
                     Email = u.Email,
                     UserTypeId = u.UserTypeId,
-                    OrganizationId = u.OrganizationId,
-                    ProgramId = u.ProgramId,
+                    OrgProgramId = u.OrgProgramId,
                     TimeZoneId = u.TimeZoneId,
-                    IsActive = u.IsActive,
-                    CreateDate = u.CreateDate,
-                    UpdateDate = u.UpdateDate,
-                    Organization = u.Organization != null ? new OrganizationDto
+                    IsDeleted = u.IsDeleted,
+                    CreatedAt = u.CreatedAt,
+                    UpdatedAt = u.UpdatedAt,
+                    OrgProgram = u.OrgProgram != null ? new OrgProgramResponseDto
                     {
-                        OrganizationId = u.Organization.OrganizationId,
-                        OrganizationName = u.Organization.OrganizationName,
-                        IsActive = u.Organization.IsActive,
-                        CreateDate = u.Organization.CreateDate,
-                        UpdateDate = u.Organization.UpdateDate
+                        OrgProgramId = u.OrgProgram.OrgProgramId,
+                        OrganizationId = u.OrgProgram.OrganizationId,
+                        ProgramName = u.OrgProgram.ProgramName,
+                        IsDeleted = u.OrgProgram.IsDeleted,
+                        CreatedAt = u.OrgProgram.CreatedAt,
+                        UpdatedAt = u.OrgProgram.UpdatedAt
                     } : null,
                     UserType = u.UserType != null ? new UserTypeResponseDto
                     {
                         UserTypeId = u.UserType.UserTypeId,
                         UserType = u.UserType.UserType1,
-                        CreateDate = u.UserType.CreateDate
+                        CreatedAt = u.UserType.CreatedAt
                     } : null
                 }).ToList();
 
@@ -112,9 +113,10 @@ namespace TaskManager.API.Controllers
             try
             {
                 var user = await _context.Users
-                    .Include(u => u.Organization)
+                    .Include(u => u.OrgProgram)
+                        .ThenInclude(op => op!.Organization)
                     .Include(u => u.UserType)
-                    .FirstOrDefaultAsync(u => u.UserId == id);
+                    .FirstOrDefaultAsync(u => u.UserId == id && !u.IsDeleted);
 
                 if (user == null)
                 {
@@ -128,25 +130,25 @@ namespace TaskManager.API.Controllers
                     UserName = user.UserName,
                     Email = user.Email,
                     UserTypeId = user.UserTypeId,
-                    OrganizationId = user.OrganizationId,
-                    ProgramId = user.ProgramId,
+                    OrgProgramId = user.OrgProgramId,
                     TimeZoneId = user.TimeZoneId,
-                    IsActive = user.IsActive,
-                    CreateDate = user.CreateDate,
-                    UpdateDate = user.UpdateDate,
-                    Organization = user.Organization != null ? new OrganizationDto
+                    IsDeleted = user.IsDeleted,
+                    CreatedAt = user.CreatedAt,
+                    UpdatedAt = user.UpdatedAt,
+                    OrgProgram = user.OrgProgram != null ? new OrgProgramResponseDto
                     {
-                        OrganizationId = user.Organization.OrganizationId,
-                        OrganizationName = user.Organization.OrganizationName,
-                        IsActive = user.Organization.IsActive,
-                        CreateDate = user.Organization.CreateDate,
-                        UpdateDate = user.Organization.UpdateDate
+                        OrgProgramId = user.OrgProgram.OrgProgramId,
+                        OrganizationId = user.OrgProgram.OrganizationId,
+                        ProgramName = user.OrgProgram.ProgramName,
+                        IsDeleted = user.OrgProgram.IsDeleted,
+                        CreatedAt = user.OrgProgram.CreatedAt,
+                        UpdatedAt = user.OrgProgram.UpdatedAt
                     } : null,
                     UserType = user.UserType != null ? new UserTypeResponseDto
                     {
                         UserTypeId = user.UserType.UserTypeId,
                         UserType = user.UserType.UserType1,
-                        CreateDate = user.UserType.CreateDate
+                        CreatedAt = user.UserType.CreatedAt
                     } : null
                 };
 
@@ -183,18 +185,32 @@ namespace TaskManager.API.Controllers
                     UserName = userDto.UserName,
                     Email = userDto.Email,
                     UserTypeId = userDto.UserTypeId,
-                    OrganizationId = userDto.OrganizationId,
-                    ProgramId = userDto.ProgramId,
+                    OrgProgramId = userDto.OrgProgramId,
                     TimeZoneId = userDto.TimeZoneId,
-                    IsActive = true,
-                    CreateDate = DateTime.UtcNow,
-                    UpdateDate = DateTime.UtcNow
+                    IsDeleted = false,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    CreatedBy = 1,
+                    UpdatedBy = 1
                 };
 
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(GetUser), new { id = user.UserId }, user);
+                var responseDto = new UserResponseDto
+                {
+                    UserId = user.UserId,
+                    UserName = user.UserName,
+                    Email = user.Email,
+                    UserTypeId = user.UserTypeId,
+                    OrgProgramId = user.OrgProgramId,
+                    TimeZoneId = user.TimeZoneId,
+                    IsDeleted = user.IsDeleted,
+                    CreatedAt = user.CreatedAt,
+                    UpdatedAt = user.UpdatedAt
+                };
+
+                return CreatedAtAction(nameof(GetUser), new { id = user.UserId }, responseDto);
             }
             catch (DbUpdateException ex)
             {
@@ -234,9 +250,13 @@ namespace TaskManager.API.Controllers
                     return BadRequest("User ID mismatch");
                 }
 
-                var existingUser = await _context.Users.FindAsync(id);
+                var existingUser = await _context.Users
+                    .Include(u => u.OrgProgram)
+                        .ThenInclude(op => op!.Organization)
+                    .Include(u => u.UserType)
+                    .FirstOrDefaultAsync(u => u.UserId == id);
 
-                if (existingUser == null)
+                if (existingUser == null || existingUser.IsDeleted)
                 {
                     _logger.LogWarning("User with ID {UserId} not found", id);
                     return NotFound($"User with ID {id} not found");
@@ -245,15 +265,43 @@ namespace TaskManager.API.Controllers
                 existingUser.UserName = userDto.UserName;
                 existingUser.Email = userDto.Email;
                 existingUser.UserTypeId = userDto.UserTypeId;
-                existingUser.OrganizationId = userDto.OrganizationId;
-                existingUser.ProgramId = userDto.ProgramId;
+                existingUser.OrgProgramId = userDto.OrgProgramId;
                 existingUser.TimeZoneId = userDto.TimeZoneId;
-                existingUser.IsActive = userDto.IsActive;
-                existingUser.UpdateDate = DateTime.UtcNow;
+                existingUser.IsDeleted = userDto.IsDeleted;
+                existingUser.UpdatedAt = DateTime.UtcNow;
+                existingUser.UpdatedBy = 1;
 
                 await _context.SaveChangesAsync();
 
-                return Ok(existingUser);
+                var responseDto = new UserResponseDto
+                {
+                    UserId = existingUser.UserId,
+                    UserName = existingUser.UserName,
+                    Email = existingUser.Email,
+                    UserTypeId = existingUser.UserTypeId,
+                    OrgProgramId = existingUser.OrgProgramId,
+                    TimeZoneId = existingUser.TimeZoneId,
+                    IsDeleted = existingUser.IsDeleted,
+                    CreatedAt = existingUser.CreatedAt,
+                    UpdatedAt = existingUser.UpdatedAt,
+                    OrgProgram = existingUser.OrgProgram != null ? new OrgProgramResponseDto
+                    {
+                        OrgProgramId = existingUser.OrgProgram.OrgProgramId,
+                        OrganizationId = existingUser.OrgProgram.OrganizationId,
+                        ProgramName = existingUser.OrgProgram.ProgramName,
+                        IsDeleted = existingUser.OrgProgram.IsDeleted,
+                        CreatedAt = existingUser.OrgProgram.CreatedAt,
+                        UpdatedAt = existingUser.OrgProgram.UpdatedAt
+                    } : null,
+                    UserType = existingUser.UserType != null ? new UserTypeResponseDto
+                    {
+                        UserTypeId = existingUser.UserType.UserTypeId,
+                        UserType = existingUser.UserType.UserType1,
+                        CreatedAt = existingUser.UserType.CreatedAt
+                    } : null
+                };
+
+                return Ok(responseDto);
             }
             catch (DbUpdateConcurrencyException ex)
             {
@@ -273,7 +321,7 @@ namespace TaskManager.API.Controllers
         }
 
         /// <summary>
-        /// Delete a user (soft delete - marks as inactive)
+        /// Delete a user (soft delete - marks as deleted)
         /// </summary>
         /// <param name="id">User ID</param>
         /// <returns>No content</returns>
@@ -288,14 +336,15 @@ namespace TaskManager.API.Controllers
             {
                 var user = await _context.Users.FindAsync(id);
 
-                if (user == null)
+                if (user == null || user.IsDeleted)
                 {
                     _logger.LogWarning("User with ID {UserId} not found", id);
                     return NotFound($"User with ID {id} not found");
                 }
 
-                user.IsActive = false;
-                user.UpdateDate = DateTime.UtcNow;
+                user.IsDeleted = true;
+                user.UpdatedAt = DateTime.UtcNow;
+                user.UpdatedBy = 1;
 
                 await _context.SaveChangesAsync();
 

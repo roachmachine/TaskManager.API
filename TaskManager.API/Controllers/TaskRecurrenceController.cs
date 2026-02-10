@@ -49,12 +49,13 @@ namespace TaskManager.API.Controllers
                     RecurrenceType = tr.RecurrenceType,
                     IntervalDays = tr.IntervalDays,
                     RecurrenceEndDate = tr.RecurrenceEndDate,
-                    CreatedDate = tr.CreatedDate,
+                    CreatedAt = tr.CreatedAt,
                     TaskRecurrenceDays = tr.TaskRecurrenceDays.Select(trd => new TaskRecurrenceDayResponseDto
                     {
                         RecurrenceDayId = trd.RecurrenceDayId,
                         RecurrenceId = trd.RecurrenceId,
-                        DayOfWeek = trd.DayOfWeek
+                        DayOfWeek = trd.DayOfWeek,
+                        WeekNumber = trd.WeekNumber
                     }).ToList()
                 }).ToList();
 
@@ -105,7 +106,7 @@ namespace TaskManager.API.Controllers
                     RecurrenceType = recurrence.RecurrenceType,
                     IntervalDays = recurrence.IntervalDays,
                     RecurrenceEndDate = recurrence.RecurrenceEndDate,
-                    CreatedDate = recurrence.CreatedDate,
+                    CreatedAt = recurrence.CreatedAt,
                     TaskRecurrenceDays = recurrence.TaskRecurrenceDays.Select(trd => new TaskRecurrenceDayResponseDto
                     {
                         RecurrenceDayId = trd.RecurrenceDayId,
@@ -148,13 +149,26 @@ namespace TaskManager.API.Controllers
                     RecurrenceType = recurrenceDto.RecurrenceType,
                     IntervalDays = recurrenceDto.IntervalDays,
                     RecurrenceEndDate = recurrenceDto.RecurrenceEndDate,
-                    CreatedDate = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    CreatedBy = 1,
+                    UpdatedBy = 1
                 };
 
                 _context.TaskRecurrences.Add(recurrence);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(GetTaskRecurrence), new { id = recurrence.RecurrenceId }, recurrence);
+                var responseDto = new TaskRecurrenceResponseDto
+                {
+                    RecurrenceId = recurrence.RecurrenceId,
+                    RecurrenceType = recurrence.RecurrenceType,
+                    IntervalDays = recurrence.IntervalDays,
+                    RecurrenceEndDate = recurrence.RecurrenceEndDate,
+                    CreatedAt = recurrence.CreatedAt,
+                    TaskRecurrenceDays = new List<TaskRecurrenceDayResponseDto>()
+                };
+
+                return CreatedAtAction(nameof(GetTaskRecurrence), new { id = recurrence.RecurrenceId }, responseDto);
             }
             catch (DbUpdateException ex)
             {
@@ -194,7 +208,9 @@ namespace TaskManager.API.Controllers
                     return BadRequest("Task recurrence ID mismatch");
                 }
 
-                var existingRecurrence = await _context.TaskRecurrences.FindAsync(id);
+                var existingRecurrence = await _context.TaskRecurrences
+                    .Include(tr => tr.TaskRecurrenceDays)
+                    .FirstOrDefaultAsync(tr => tr.RecurrenceId == id);
 
                 if (existingRecurrence == null)
                 {
@@ -205,10 +221,28 @@ namespace TaskManager.API.Controllers
                 existingRecurrence.RecurrenceType = recurrenceDto.RecurrenceType;
                 existingRecurrence.IntervalDays = recurrenceDto.IntervalDays;
                 existingRecurrence.RecurrenceEndDate = recurrenceDto.RecurrenceEndDate;
+                existingRecurrence.UpdatedAt = DateTime.UtcNow;
+                existingRecurrence.UpdatedBy = 1;
 
                 await _context.SaveChangesAsync();
 
-                return Ok(existingRecurrence);
+                var responseDto = new TaskRecurrenceResponseDto
+                {
+                    RecurrenceId = existingRecurrence.RecurrenceId,
+                    RecurrenceType = existingRecurrence.RecurrenceType,
+                    IntervalDays = existingRecurrence.IntervalDays,
+                    RecurrenceEndDate = existingRecurrence.RecurrenceEndDate,
+                    CreatedAt = existingRecurrence.CreatedAt,
+                    TaskRecurrenceDays = existingRecurrence.TaskRecurrenceDays.Select(trd => new TaskRecurrenceDayResponseDto
+                    {
+                        RecurrenceDayId = trd.RecurrenceDayId,
+                        RecurrenceId = trd.RecurrenceId,
+                        DayOfWeek = trd.DayOfWeek,
+                        WeekNumber = trd.WeekNumber
+                    }).ToList()
+                };
+
+                return Ok(responseDto);
             }
             catch (DbUpdateConcurrencyException ex)
             {

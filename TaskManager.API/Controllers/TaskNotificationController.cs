@@ -53,11 +53,11 @@ namespace TaskManager.API.Controllers
                 var notificationDtos = notifications.Select(n => new TaskNotificationResponseDto
                 {
                     TaskNotificationId = n.TaskNotificationId,
-                    RecurrenceId = n.RecurrenceId,
+                    RecurrenceId = n.RecurrenceId ?? 0,
                     OffsetValue = n.OffsetValue,
                     OffsetType = n.OffsetType,
                     IsEnabled = n.IsEnabled,
-                    CreatedDate = n.CreatedDate
+                    CreatedDate = n.CreatedAt
                 }).ToList();
 
                 var response = new PaginatedResponseDto<TaskNotificationResponseDto>
@@ -102,11 +102,11 @@ namespace TaskManager.API.Controllers
                 var notificationDto = new TaskNotificationResponseDto
                 {
                     TaskNotificationId = notification.TaskNotificationId,
-                    RecurrenceId = notification.RecurrenceId,
+                    RecurrenceId = notification.RecurrenceId ?? 0, // Use 0 or another default if null
                     OffsetValue = notification.OffsetValue,
                     OffsetType = notification.OffsetType,
                     IsEnabled = notification.IsEnabled,
-                    CreatedDate = notification.CreatedDate
+                    CreatedDate = notification.CreatedAt
                 };
 
                 return Ok(notificationDto);
@@ -143,13 +143,24 @@ namespace TaskManager.API.Controllers
                     OffsetValue = notificationDto.OffsetValue,
                     OffsetType = notificationDto.OffsetType,
                     IsEnabled = true,
-                    CreatedDate = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
                 };
 
                 _context.TaskNotifications.Add(notification);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(GetTaskNotification), new { id = notification.TaskNotificationId }, notification);
+                var responseDto = new TaskNotificationResponseDto
+                {
+                    TaskNotificationId = notification.TaskNotificationId,
+                    RecurrenceId = notification.RecurrenceId ?? 0,
+                    OffsetValue = notification.OffsetValue,
+                    OffsetType = notification.OffsetType,
+                    IsEnabled = notification.IsEnabled,
+                    CreatedDate = notification.CreatedAt
+                };
+
+                return CreatedAtAction(nameof(GetTaskNotification), new { id = notification.TaskNotificationId }, responseDto);
             }
             catch (DbUpdateException ex)
             {

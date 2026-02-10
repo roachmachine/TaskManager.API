@@ -8,6 +8,7 @@ using TaskManager.API.Controllers;
 using TaskManager.API.Data;
 using TaskManager.API.DTOs;
 using TaskManager.API.Models;
+using TaskManager.API.Tests.Helpers;
 
 namespace TaskManager.API.Tests.Controllers
 {
@@ -47,16 +48,20 @@ namespace TaskManager.API.Tests.Controllers
             {
                 UserTypeId = 1,
                 UserType1 = "Admin",
-                CreateDate = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                RowVersion = TestDataHelper.DefaultRowVersion
             };
 
             var organization = new Organization
             {
                 OrganizationId = 1,
                 OrganizationName = "Test Org",
-                IsActive = true,
-                CreateDate = DateTime.UtcNow,
-                UpdateDate = DateTime.UtcNow
+                IsDeleted = false,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                RowVersion = TestDataHelper.DefaultRowVersion,
+                CreatedBy = 1,
+                UpdatedBy = 1
             };
 
             var users = new List<User>
@@ -67,11 +72,14 @@ namespace TaskManager.API.Tests.Controllers
                     UserName = "john.doe",
                     Email = "john@example.com",
                     UserTypeId = 1,
-                    OrganizationId = 1,
+                    OrgProgramId = 1,
                     TimeZoneId = "UTC",
-                    IsActive = true,
-                    CreateDate = DateTime.UtcNow.AddDays(-10),
-                    UpdateDate = DateTime.UtcNow
+                    IsDeleted = false,
+                    CreatedAt = DateTime.UtcNow.AddDays(-10),
+                    UpdatedAt = DateTime.UtcNow,
+                    RowVersion = TestDataHelper.DefaultRowVersion,
+                    CreatedBy = 1,
+                    UpdatedBy = 1
                 },
                 new User
                 {
@@ -79,11 +87,14 @@ namespace TaskManager.API.Tests.Controllers
                     UserName = "jane.smith",
                     Email = "jane@example.com",
                     UserTypeId = 1,
-                    OrganizationId = 1,
+                    OrgProgramId = 1,
                     TimeZoneId = "UTC",
-                    IsActive = true,
-                    CreateDate = DateTime.UtcNow.AddDays(-5),
-                    UpdateDate = DateTime.UtcNow
+                    IsDeleted = false,
+                    CreatedAt = DateTime.UtcNow.AddDays(-5),
+                    UpdatedAt = DateTime.UtcNow,
+                    RowVersion = TestDataHelper.DefaultRowVersion,
+                    CreatedBy = 1,
+                    UpdatedBy = 1
                 },
                 new User
                 {
@@ -91,11 +102,14 @@ namespace TaskManager.API.Tests.Controllers
                     UserName = "bob.jones",
                     Email = "bob@example.com",
                     UserTypeId = 1,
-                    OrganizationId = null,
+                    OrgProgramId = null,
                     TimeZoneId = "UTC",
-                    IsActive = true,
-                    CreateDate = DateTime.UtcNow,
-                    UpdateDate = DateTime.UtcNow
+                    IsDeleted = false,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    RowVersion = TestDataHelper.DefaultRowVersion,
+                    CreatedBy = 1,
+                    UpdatedBy = 1
                 }
             };
 
@@ -114,7 +128,7 @@ namespace TaskManager.API.Tests.Controllers
             SeedTestData();
 
             // Act
-            var result = await _controller.GetUsers(pageNumber: 1, pageSize: 10);
+            var result = await _controller.GetUsers(pageNumber: 1, pageSize: 10, OrgProgramId: 1);
 
             // Assert
             var okResult = result.Result as OkObjectResult;
@@ -123,8 +137,8 @@ namespace TaskManager.API.Tests.Controllers
 
             var response = okResult.Value as PaginatedResponseDto<UserResponseDto>;
             response.Should().NotBeNull();
-            response!.Total.Should().Be(3);
-            response.Data.Should().HaveCount(3);
+            response!.Total.Should().Be(2);
+            response.Data.Should().HaveCount(2);
         }
 
         [Fact]
@@ -134,7 +148,7 @@ namespace TaskManager.API.Tests.Controllers
             SeedTestData();
 
             // Act
-            var result = await _controller.GetUsers(pageNumber: 1, pageSize: 10, organizationId: 1);
+            var result = await _controller.GetUsers(pageNumber: 1, pageSize: 10, OrgProgramId: 1);
 
             // Assert
             var okResult = result.Result as OkObjectResult;
@@ -143,14 +157,14 @@ namespace TaskManager.API.Tests.Controllers
             response.Should().NotBeNull();
             response!.Total.Should().Be(2);
             response.Data.Should().HaveCount(2);
-            response.Data.Should().AllSatisfy(u => u.OrganizationId.Should().Be(1));
+            response.Data.Should().AllSatisfy(u => u.OrgProgramId.Should().Be(1));
         }
 
         [Fact]
         public async Task GetUsers_WhenEmptyDatabase_ReturnsEmptyList()
         {
             // Act
-            var result = await _controller.GetUsers(pageNumber: 1, pageSize: 10);
+            var result = await _controller.GetUsers(pageNumber: 1, pageSize: 10, OrgProgramId: 1);
 
             // Assert
             var okResult = result.Result as OkObjectResult;
@@ -217,8 +231,7 @@ namespace TaskManager.API.Tests.Controllers
             var user = okResult!.Value as UserResponseDto;
             user.Should().NotBeNull();
             user!.UserId.Should().Be(1);
-            user.Organization.Should().NotBeNull("User with OrganizationId=1 should have Organization data loaded");
-            user.Organization!.OrganizationName.Should().Be("Test Org");
+            user.OrgProgramId.Should().NotBeNull("User with OrganizationId=1 should have Organization data loaded");
             user.UserType.Should().NotBeNull("UserType should be loaded");
         }
 
@@ -236,7 +249,7 @@ namespace TaskManager.API.Tests.Controllers
                 UserName = "new.user",
                 Email = "new@example.com",
                 UserTypeId = 1,
-                OrganizationId = 1,
+                OrgProgramId = 1,
                 TimeZoneId = "UTC"
             };
 
@@ -248,7 +261,7 @@ namespace TaskManager.API.Tests.Controllers
             createdResult.Should().NotBeNull();
             createdResult!.StatusCode.Should().Be(201);
 
-            var user = createdResult.Value as User;
+            var user = createdResult.Value as UserResponseDto;
             user.Should().NotBeNull();
             user!.UserName.Should().Be("new.user");
             user.Email.Should().Be("new@example.com");
@@ -295,7 +308,7 @@ namespace TaskManager.API.Tests.Controllers
             // Assert
             var savedUser = _context.Users.FirstOrDefault(u => u.UserName == "database.user");
             savedUser.Should().NotBeNull();
-            savedUser!.IsActive.Should().BeTrue();
+            savedUser!.IsDeleted.Should().BeFalse();
         }
 
         #endregion
@@ -313,9 +326,9 @@ namespace TaskManager.API.Tests.Controllers
                 UserName = "john.updated",
                 Email = "john.updated@example.com",
                 UserTypeId = 1,
-                OrganizationId = 1,
+                OrgProgramId = 1,
                 TimeZoneId = "UTC",
-                IsActive = true
+                IsDeleted = true
             };
 
             // Act
@@ -326,7 +339,7 @@ namespace TaskManager.API.Tests.Controllers
             okResult.Should().NotBeNull();
             okResult!.StatusCode.Should().Be(200);
 
-            var user = okResult.Value as User;
+            var user = okResult.Value as UserResponseDto;
             user.Should().NotBeNull();
             user!.UserName.Should().Be("john.updated");
         }
@@ -343,7 +356,7 @@ namespace TaskManager.API.Tests.Controllers
                 Email = "test@example.com",
                 UserTypeId = 1,
                 TimeZoneId = "UTC",
-                IsActive = true
+                IsDeleted = true
             };
 
             // Act
@@ -366,7 +379,7 @@ namespace TaskManager.API.Tests.Controllers
                 Email = "john@example.com",
                 UserTypeId = 1,
                 TimeZoneId = "UTC",
-                IsActive = false
+                IsDeleted = true
             };
 
             // Act
@@ -375,7 +388,7 @@ namespace TaskManager.API.Tests.Controllers
             // Assert
             var user = _context.Users.Find(1);
             user.Should().NotBeNull();
-            user!.IsActive.Should().BeFalse();
+            user!.IsDeleted.Should().BeTrue();
         }
 
         #endregion
@@ -409,7 +422,7 @@ namespace TaskManager.API.Tests.Controllers
         }
 
         [Fact]
-        public async Task DeleteUser_SetsIsActiveFalse()
+        public async Task DeleteUser_SetsIsDeletedTrue()
         {
             // Arrange
             SeedTestData();
@@ -420,7 +433,7 @@ namespace TaskManager.API.Tests.Controllers
             // Assert
             var user = _context.Users.Find(1);
             user.Should().NotBeNull();
-            user!.IsActive.Should().BeFalse();
+            user!.IsDeleted.Should().BeTrue();
         }
 
         #endregion

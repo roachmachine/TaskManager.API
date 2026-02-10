@@ -3,10 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.ComponentModel.DataAnnotations;
 using TaskManager.API.Controllers;
 using TaskManager.API.Data;
 using TaskManager.API.DTOs;
 using TaskManager.API.Models;
+using TaskManager.API.Tests.Helpers;
 
 namespace TaskManager.API.Tests.Controllers
 {
@@ -36,30 +38,52 @@ namespace TaskManager.API.Tests.Controllers
                 {
                     OrganizationId = 1,
                     OrganizationName = "Acme Corporation",
-                    IsActive = true,
-                    CreateDate = DateTime.UtcNow.AddDays(-30),
-                    UpdateDate = DateTime.UtcNow
+                    IsDeleted = false,
+                    CreatedAt = DateTime.UtcNow.AddDays(-30),
+                    UpdatedAt = DateTime.UtcNow,
+                    RowVersion = TestDataHelper.DefaultRowVersion,
+                    CreatedBy = 1,
+                    UpdatedBy = 1
                 },
                 new Organization
                 {
                     OrganizationId = 2,
                     OrganizationName = "Tech Solutions Inc",
-                    IsActive = true,
-                    CreateDate = DateTime.UtcNow.AddDays(-20),
-                    UpdateDate = DateTime.UtcNow
+                    IsDeleted = false,
+                    CreatedAt = DateTime.UtcNow.AddDays(-20),
+                    UpdatedAt = DateTime.UtcNow,
+                    RowVersion = TestDataHelper.DefaultRowVersion,
+                    CreatedBy = 1,
+                    UpdatedBy = 1
                 },
                 new Organization
                 {
                     OrganizationId = 3,
                     OrganizationName = "Global Services Ltd",
-                    IsActive = true,
-                    CreateDate = DateTime.UtcNow.AddDays(-10),
-                    UpdateDate = DateTime.UtcNow
+                    IsDeleted = false,
+                    CreatedAt = DateTime.UtcNow.AddDays(-10),
+                    UpdatedAt = DateTime.UtcNow,
+                    RowVersion = TestDataHelper.DefaultRowVersion,
+                    CreatedBy = 1,
+                    UpdatedBy = 1
                 }
             };
 
             _context.Organizations.AddRange(organizations);
             _context.SaveChanges();
+        }
+
+        private void ValidateModel(object model)
+        {
+            var validationContext = new ValidationContext(model, null, null);
+            var validationResults = new List<ValidationResult>();
+            Validator.TryValidateObject(model, validationContext, validationResults, true);
+            foreach (var validationResult in validationResults)
+            {
+                _controller.ModelState.AddModelError(
+                    validationResult.MemberNames.FirstOrDefault() ?? string.Empty,
+                    validationResult.ErrorMessage ?? string.Empty);
+            }
         }
 
         #region GetOrganizations Tests
@@ -78,7 +102,7 @@ namespace TaskManager.API.Tests.Controllers
             okResult.Should().NotBeNull();
             okResult!.StatusCode.Should().Be(200);
 
-            var response = okResult.Value as PaginatedResponseDto<Organization>;
+            var response = okResult.Value as PaginatedResponseDto<OrganizationResponseDto>;
             response.Should().NotBeNull();
             response!.Total.Should().Be(3);
             response.Data.Should().HaveCount(3);
@@ -95,7 +119,7 @@ namespace TaskManager.API.Tests.Controllers
 
             // Assert
             var okResult = result.Result as OkObjectResult;
-            var response = okResult!.Value as PaginatedResponseDto<Organization>;
+            var response = okResult!.Value as PaginatedResponseDto<OrganizationResponseDto>;
 
             response.Should().NotBeNull();
             response!.Data.Should().HaveCount(2);
@@ -115,7 +139,7 @@ namespace TaskManager.API.Tests.Controllers
 
             // Assert
             var okResult = result.Result as OkObjectResult;
-            var response = okResult!.Value as PaginatedResponseDto<Organization>;
+            var response = okResult!.Value as PaginatedResponseDto<OrganizationResponseDto>;
 
             response.Should().NotBeNull();
             response!.Data.Should().HaveCount(1);
@@ -131,7 +155,7 @@ namespace TaskManager.API.Tests.Controllers
 
             // Assert
             var okResult = result.Result as OkObjectResult;
-            var response = okResult!.Value as PaginatedResponseDto<Organization>;
+            var response = okResult!.Value as PaginatedResponseDto<OrganizationResponseDto>;
 
             response.Should().NotBeNull();
             response!.Data.Should().BeEmpty();
@@ -149,7 +173,7 @@ namespace TaskManager.API.Tests.Controllers
             SeedTestData();
 
             // Act
-            var result = await _controller.GetOrganization(id: 1);
+            var result = await _controller.GetOrganization(id: 1, includePrograms: true);
 
             // Assert
             var okResult = result.Result as OkObjectResult;
@@ -169,7 +193,7 @@ namespace TaskManager.API.Tests.Controllers
             SeedTestData();
 
             // Act
-            var result = await _controller.GetOrganization(id: 999);
+            var result = await _controller.GetOrganization(id: 999, includePrograms: true);
 
             // Assert
             var notFoundResult = result.Result as NotFoundObjectResult;
@@ -182,16 +206,19 @@ namespace TaskManager.API.Tests.Controllers
         {
             // Arrange
             SeedTestData();
-            var program = new ProgramModel
+            var program = new OrgProgram
             {
-                ProgramId = 1,
+                OrgProgramId = 1,
                 ProgramName = "Program A",
                 OrganizationId = 1,
-                IsActive = true,
-                CreateDate = DateTime.UtcNow,
-                UpdateDate = DateTime.UtcNow
+                IsDeleted = false,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                RowVersion = TestDataHelper.DefaultRowVersion,
+                CreatedBy = 1,
+                UpdatedBy = 1
             };
-            _context.Programs.Add(program);
+            _context.OrgPrograms.Add(program);
             _context.SaveChanges();
 
             // Act
@@ -202,7 +229,7 @@ namespace TaskManager.API.Tests.Controllers
             var organization = okResult!.Value as Organization;
             
             organization.Should().NotBeNull();
-            organization!.Programs.Should().HaveCount(1);
+            organization!.OrgPrograms.Should().HaveCount(1);
         }
 
         #endregion
@@ -224,10 +251,10 @@ namespace TaskManager.API.Tests.Controllers
             createdResult!.StatusCode.Should().Be(201);
             createdResult.ActionName.Should().Be(nameof(OrganizationController.GetOrganization));
 
-            var organization = createdResult.Value as Organization;
+            var organization = createdResult.Value as OrganizationResponseDto;
             organization.Should().NotBeNull();
             organization!.OrganizationName.Should().Be("New Company");
-            organization.IsActive.Should().BeTrue();
+            organization.IsDeleted.Should().BeFalse();
         }
 
         [Fact]
@@ -235,6 +262,8 @@ namespace TaskManager.API.Tests.Controllers
         {
             // Arrange
             var dto = new CreateOrganizationDto { OrganizationName = "" };
+
+            ValidateModel(dto);
 
             // Act
             var result = await _controller.CreateOrganization(dto);
@@ -259,8 +288,8 @@ namespace TaskManager.API.Tests.Controllers
                 .FirstOrDefault(o => o.OrganizationName == "Database Test Company");
             
             savedOrganization.Should().NotBeNull();
-            savedOrganization!.IsActive.Should().BeTrue();
-            savedOrganization.CreateDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+            savedOrganization!.IsDeleted.Should().BeFalse();
+            savedOrganization.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
         }
 
         #endregion
@@ -276,7 +305,7 @@ namespace TaskManager.API.Tests.Controllers
             {
                 OrganizationId = 1,
                 OrganizationName = "Updated Acme",
-                IsActive = true
+                IsDeleted = true
             };
 
             // Act
@@ -287,7 +316,7 @@ namespace TaskManager.API.Tests.Controllers
             okResult.Should().NotBeNull();
             okResult!.StatusCode.Should().Be(200);
 
-            var organization = okResult.Value as Organization;
+            var organization = okResult.Value as OrganizationResponseDto;
             organization.Should().NotBeNull();
             organization!.OrganizationName.Should().Be("Updated Acme");
         }
@@ -301,7 +330,7 @@ namespace TaskManager.API.Tests.Controllers
             {
                 OrganizationId = 2,
                 OrganizationName = "Updated Name",
-                IsActive = true
+                IsDeleted = true
             };
 
             // Act
@@ -322,7 +351,7 @@ namespace TaskManager.API.Tests.Controllers
             {
                 OrganizationId = 999,
                 OrganizationName = "Updated Name",
-                IsActive = true
+                IsDeleted = true
             };
 
             // Act
@@ -343,7 +372,7 @@ namespace TaskManager.API.Tests.Controllers
             {
                 OrganizationId = 1,
                 OrganizationName = "Acme Corporation",
-                IsActive = false
+                IsDeleted = true
             };
 
             // Act
@@ -352,7 +381,7 @@ namespace TaskManager.API.Tests.Controllers
             // Assert
             var organization = _context.Organizations.Find(1);
             organization.Should().NotBeNull();
-            organization!.IsActive.Should().BeFalse();
+            organization!.IsDeleted.Should().BeTrue();
         }
 
         #endregion
@@ -387,7 +416,7 @@ namespace TaskManager.API.Tests.Controllers
         }
 
         [Fact]
-        public async Task DeleteOrganization_SetsIsActiveFalse()
+        public async Task DeleteOrganization_SetsIsDeletedTrue()
         {
             // Arrange
             SeedTestData();
@@ -398,7 +427,7 @@ namespace TaskManager.API.Tests.Controllers
             // Assert
             var organization = _context.Organizations.Find(1);
             organization.Should().NotBeNull();
-            organization!.IsActive.Should().BeFalse();
+            organization!.IsDeleted.Should().BeTrue();
         }
 
         [Fact]
