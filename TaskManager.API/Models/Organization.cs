@@ -9,7 +9,7 @@ public partial class Organization
 
     public string OrganizationName { get; set; } = null!;
 
-    public bool IsActive { get; set; }
+    public bool IsDeleted { get; set; }
 
     public DateTime CreateDate { get; set; }
 

@@ -18,8 +18,8 @@ namespace TaskManager.API.DTOs
         [StringLength(100, MinimumLength = 1, ErrorMessage = "Organization name must be between 1 and 100 characters")]
         public string OrganizationName { get; set; } = null!;
 
-        [Required(ErrorMessage = "IsActive status is required")]
-        public bool IsActive { get; set; }
+        [Required(ErrorMessage = "IsDeleted status is required")]
+        public bool IsDeleted { get; set; }
     }
 
     public class OrganizationDto
@@ -28,7 +28,7 @@ namespace TaskManager.API.DTOs
 
         public string OrganizationName { get; set; } = null!;
 
-        public bool IsActive { get; set; }
+        public bool IsDeleted { get; set; }
 
         public DateTime CreateDate { get; set; }
 

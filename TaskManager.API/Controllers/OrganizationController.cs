@@ -42,9 +42,9 @@ namespace TaskManager.API.Controllers
         {
             try
             {
-                var total = await _context.Organizations.CountAsync(o => o.IsActive);
+                var total = await _context.Organizations.CountAsync(o => !o.IsDeleted);
                 var organizations = await _context.Organizations
-                    .Where(o => o.IsActive)
+                    .Where(o => !o.IsDeleted)
                     .OrderBy(o => o.OrganizationName)
                     .Skip((pageNumber - 1) * pageSize)
                     .Take(pageSize)
@@ -156,7 +156,7 @@ namespace TaskManager.API.Controllers
                 var organization = new Organization
                 {
                     OrganizationName = organizationDto.OrganizationName,
-                    IsActive = true,
+                    IsDeleted = false,
                     CreateDate = DateTime.UtcNow,
                     UpdateDate = DateTime.UtcNow
                 };
@@ -218,7 +218,7 @@ namespace TaskManager.API.Controllers
 
                 // Just modify the tracked entity
                 existingOrganization.OrganizationName = organizationDto.OrganizationName;
-                existingOrganization.IsActive = organizationDto.IsActive;
+                existingOrganization.IsDeleted = organizationDto.IsDeleted;
                 existingOrganization.UpdateDate = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
 
@@ -275,7 +275,7 @@ namespace TaskManager.API.Controllers
                     return NotFound($"Organization with ID {id} not found");
                 }
 
-                organization.IsActive = false;
+                organization.IsDeleted = true;
                 organization.UpdateDate = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();

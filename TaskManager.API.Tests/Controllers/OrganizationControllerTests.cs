@@ -36,7 +36,7 @@ namespace TaskManager.API.Tests.Controllers
                 {
                     OrganizationId = 1,
                     OrganizationName = "Acme Corporation",
-                    IsActive = true,
+                    IsDeleted = false,
                     CreateDate = DateTime.UtcNow.AddDays(-30),
                     UpdateDate = DateTime.UtcNow
                 },
@@ -44,7 +44,7 @@ namespace TaskManager.API.Tests.Controllers
                 {
                     OrganizationId = 2,
                     OrganizationName = "Tech Solutions Inc",
-                    IsActive = true,
+                    IsDeleted = false,
                     CreateDate = DateTime.UtcNow.AddDays(-20),
                     UpdateDate = DateTime.UtcNow
                 },
@@ -52,7 +52,7 @@ namespace TaskManager.API.Tests.Controllers
                 {
                     OrganizationId = 3,
                     OrganizationName = "Global Services Ltd",
-                    IsActive = true,
+                    IsDeleted = false,
                     CreateDate = DateTime.UtcNow.AddDays(-10),
                     UpdateDate = DateTime.UtcNow
                 }
@@ -227,7 +227,7 @@ namespace TaskManager.API.Tests.Controllers
             var organization = createdResult.Value as Organization;
             organization.Should().NotBeNull();
             organization!.OrganizationName.Should().Be("New Company");
-            organization.IsActive.Should().BeTrue();
+            organization.IsDeleted.Should().BeFalse();
         }
 
         [Fact]
@@ -259,7 +259,7 @@ namespace TaskManager.API.Tests.Controllers
                 .FirstOrDefault(o => o.OrganizationName == "Database Test Company");
             
             savedOrganization.Should().NotBeNull();
-            savedOrganization!.IsActive.Should().BeTrue();
+            savedOrganization!.IsDeleted.Should().BeFalse();
             savedOrganization.CreateDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
         }
 
@@ -276,7 +276,7 @@ namespace TaskManager.API.Tests.Controllers
             {
                 OrganizationId = 1,
                 OrganizationName = "Updated Acme",
-                IsActive = true
+                IsDeleted = false
             };
 
             // Act
@@ -301,7 +301,7 @@ namespace TaskManager.API.Tests.Controllers
             {
                 OrganizationId = 2,
                 OrganizationName = "Updated Name",
-                IsActive = true
+                IsDeleted = false
             };
 
             // Act
@@ -322,7 +322,7 @@ namespace TaskManager.API.Tests.Controllers
             {
                 OrganizationId = 999,
                 OrganizationName = "Updated Name",
-                IsActive = true
+                IsDeleted = false
             };
 
             // Act
@@ -343,7 +343,7 @@ namespace TaskManager.API.Tests.Controllers
             {
                 OrganizationId = 1,
                 OrganizationName = "Acme Corporation",
-                IsActive = false
+                IsDeleted = true
             };
 
             // Act
@@ -352,7 +352,7 @@ namespace TaskManager.API.Tests.Controllers
             // Assert
             var organization = _context.Organizations.Find(1);
             organization.Should().NotBeNull();
-            organization!.IsActive.Should().BeFalse();
+            organization!.IsDeleted.Should().BeTrue();
         }
 
         #endregion
@@ -387,7 +387,7 @@ namespace TaskManager.API.Tests.Controllers
         }
 
         [Fact]
-        public async Task DeleteOrganization_SetsIsActiveFalse()
+        public async Task DeleteOrganization_SetsIsDeletedTrue()
         {
             // Arrange
             SeedTestData();
@@ -398,7 +398,7 @@ namespace TaskManager.API.Tests.Controllers
             // Assert
             var organization = _context.Organizations.Find(1);
             organization.Should().NotBeNull();
-            organization!.IsActive.Should().BeFalse();
+            organization!.IsDeleted.Should().BeTrue();
         }
 
         [Fact]

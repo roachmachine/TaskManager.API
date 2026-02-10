@@ -63,7 +63,7 @@ namespace TaskManager.API.Controllers
                     {
                         OrganizationId = p.Organization.OrganizationId,
                         OrganizationName = p.Organization.OrganizationName,
-                        IsActive = p.Organization.IsActive,
+                        IsDeleted = p.Organization.IsDeleted,
                         CreateDate = p.Organization.CreateDate,
                         UpdateDate = p.Organization.UpdateDate
                     } : null
@@ -122,7 +122,7 @@ namespace TaskManager.API.Controllers
                     {
                         OrganizationId = program.Organization.OrganizationId,
                         OrganizationName = program.Organization.OrganizationName,
-                        IsActive = program.Organization.IsActive,
+                        IsDeleted = program.Organization.IsDeleted,
                         CreateDate = program.Organization.CreateDate,
                         UpdateDate = program.Organization.UpdateDate
                     } : null

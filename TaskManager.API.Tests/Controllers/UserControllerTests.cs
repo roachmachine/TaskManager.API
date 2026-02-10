@@ -54,7 +54,7 @@ namespace TaskManager.API.Tests.Controllers
             {
                 OrganizationId = 1,
                 OrganizationName = "Test Org",
-                IsActive = true,
+                IsDeleted = false,
                 CreateDate = DateTime.UtcNow,
                 UpdateDate = DateTime.UtcNow
             };

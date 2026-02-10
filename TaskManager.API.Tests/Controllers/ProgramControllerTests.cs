@@ -34,7 +34,7 @@ namespace TaskManager.API.Tests.Controllers
             {
                 OrganizationId = 1,
                 OrganizationName = "Tech Corp",
-                IsActive = true,
+                IsDeleted = false,
                 CreateDate = DateTime.UtcNow,
                 UpdateDate = DateTime.UtcNow
             };
@@ -43,7 +43,7 @@ namespace TaskManager.API.Tests.Controllers
             {
                 OrganizationId = 2,
                 OrganizationName = "Global Inc",
-                IsActive = true,
+                IsDeleted = false,
                 CreateDate = DateTime.UtcNow,
                 UpdateDate = DateTime.UtcNow
             };

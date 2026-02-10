@@ -51,7 +51,7 @@ public partial class TaskManagerDbContext : DbContext
             entity.Property(e => e.CreateDate)
                 .HasDefaultValueSql("(getutcdate())")
                 .HasColumnType("datetime");
-            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.IsDeleted).HasDefaultValue(false);
             entity.Property(e => e.OrganizationName)
                 .HasMaxLength(100)
                 .IsUnicode(false);
