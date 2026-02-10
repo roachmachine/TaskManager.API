@@ -58,8 +58,8 @@ namespace TaskManager.API.DTOs
 
         public DateTime? CompletedDate { get; set; }
 
-        public DateTime CreatedDate { get; set; }
+        public DateTime CreatedAt { get; set; }
 
-        public DateTime UpdateDate { get; set; }
+        public DateTime UpdatedAt { get; set; }
     }
 }

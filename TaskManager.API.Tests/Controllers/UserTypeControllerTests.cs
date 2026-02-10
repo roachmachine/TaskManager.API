@@ -35,19 +35,19 @@ namespace TaskManager.API.Tests.Controllers
                 {
                     UserTypeId = 1,
                     UserType1 = "Admin",
-                    CreateDate = DateTime.UtcNow.AddDays(-30)
+                    CreatedAt = DateTime.UtcNow.AddDays(-30)
                 },
                 new UserType
                 {
                     UserTypeId = 2,
                     UserType1 = "Manager",
-                    CreateDate = DateTime.UtcNow.AddDays(-20)
+                    CreatedAt = DateTime.UtcNow.AddDays(-20)
                 },
                 new UserType
                 {
                     UserTypeId = 3,
                     UserType1 = "User",
-                    CreateDate = DateTime.UtcNow.AddDays(-10)
+                    CreatedAt = DateTime.UtcNow.AddDays(-10)
                 }
             };
 
@@ -204,7 +204,7 @@ namespace TaskManager.API.Tests.Controllers
                 .FirstOrDefault(ut => ut.UserType1 == "Coordinator");
             
             savedUserType.Should().NotBeNull();
-            savedUserType!.CreateDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+            savedUserType!.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
         }
 
         #endregion

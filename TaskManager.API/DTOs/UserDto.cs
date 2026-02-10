@@ -16,9 +16,7 @@ namespace TaskManager.API.DTOs
         [Required(ErrorMessage = "User type ID is required")]
         public int UserTypeId { get; set; }
 
-        public int? OrganizationId { get; set; }
-
-        public int? ProgramId { get; set; }
+        public int? OrgProgramId { get; set; }
 
         [Required(ErrorMessage = "Time zone ID is required")]
         [StringLength(100, MinimumLength = 1, ErrorMessage = "Time zone ID must be between 1 and 100 characters")]
@@ -42,16 +40,14 @@ namespace TaskManager.API.DTOs
         [Required(ErrorMessage = "User type ID is required")]
         public int UserTypeId { get; set; }
 
-        public int? OrganizationId { get; set; }
-
-        public int? ProgramId { get; set; }
+        public int? OrgProgramId { get; set; }
 
         [Required(ErrorMessage = "Time zone ID is required")]
         [StringLength(100, MinimumLength = 1, ErrorMessage = "Time zone ID must be between 1 and 100 characters")]
         public string TimeZoneId { get; set; } = null!;
 
-        [Required(ErrorMessage = "IsActive status is required")]
-        public bool IsActive { get; set; }
+        [Required(ErrorMessage = "IsDeleted status is required")]
+        public bool IsDeleted { get; set; }
     }
 
     public class UserResponseDto
@@ -64,20 +60,18 @@ namespace TaskManager.API.DTOs
 
         public int UserTypeId { get; set; }
 
-        public int? OrganizationId { get; set; }
-
-        public int? ProgramId { get; set; }
+        public int? OrgProgramId { get; set; }
 
         public string TimeZoneId { get; set; } = null!;
 
-        public bool IsActive { get; set; }
+        public bool IsDeleted { get; set; }
 
-        public DateTime CreateDate { get; set; }
+        public DateTime CreatedAt { get; set; }
 
-        public DateTime UpdateDate { get; set; }
-
-        public OrganizationDto? Organization { get; set; }
+        public DateTime UpdatedAt { get; set; }
 
         public UserTypeResponseDto? UserType { get; set; }
+
+        public OrgProgramResponseDto? OrgProgram { get; set; }
     }
 }

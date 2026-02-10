@@ -59,8 +59,8 @@ namespace TaskManager.API.Controllers
                     StepOrder = s.StepOrder,
                     IsCompleted = s.IsCompleted,
                     CompletedDate = s.CompletedDate,
-                    CreatedDate = s.CreatedDate,
-                    UpdateDate = s.UpdateDate
+                    CreatedAt = s.CreatedAt,
+                    UpdatedAt = s.UpdatedAt
                 }).ToList();
 
                 var response = new PaginatedResponseDto<TaskStepResponseDto>
@@ -111,8 +111,8 @@ namespace TaskManager.API.Controllers
                     StepOrder = step.StepOrder,
                     IsCompleted = step.IsCompleted,
                     CompletedDate = step.CompletedDate,
-                    CreatedDate = step.CreatedDate,
-                    UpdateDate = step.UpdateDate
+                    CreatedAt = step.CreatedAt,
+                    UpdatedAt = step.UpdatedAt
                 };
 
                 return Ok(stepDto);
@@ -150,14 +150,29 @@ namespace TaskManager.API.Controllers
                     StepDescription = stepDto.StepDescription,
                     StepOrder = stepDto.StepOrder,
                     IsCompleted = false,
-                    CreatedDate = DateTime.UtcNow,
-                    UpdateDate = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    CreatedBy = 1,
+                    UpdatedBy = 1
                 };
 
                 _context.TaskSteps.Add(step);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(GetTaskStep), new { id = step.TaskStepId }, step);
+                var responseDto = new TaskStepResponseDto
+                {
+                    TaskStepId = step.TaskStepId,
+                    UserTaskId = step.UserTaskId,
+                    StepTitle = step.StepTitle,
+                    StepDescription = step.StepDescription,
+                    StepOrder = step.StepOrder,
+                    IsCompleted = step.IsCompleted,
+                    CompletedDate = step.CompletedDate,
+                    CreatedAt = step.CreatedAt,
+                    UpdatedAt = step.UpdatedAt
+                };
+
+                return CreatedAtAction(nameof(GetTaskStep), new { id = step.TaskStepId }, responseDto);
             }
             catch (DbUpdateException ex)
             {
@@ -211,11 +226,25 @@ namespace TaskManager.API.Controllers
                 existingStep.StepOrder = stepDto.StepOrder;
                 existingStep.IsCompleted = stepDto.IsCompleted;
                 existingStep.CompletedDate = stepDto.IsCompleted ? DateTime.UtcNow : null;
-                existingStep.UpdateDate = DateTime.UtcNow;
+                existingStep.UpdatedAt = DateTime.UtcNow;
+                existingStep.UpdatedBy = 1;
 
                 await _context.SaveChangesAsync();
 
-                return Ok(existingStep);
+                var responseDto = new TaskStepResponseDto
+                {
+                    TaskStepId = existingStep.TaskStepId,
+                    UserTaskId = existingStep.UserTaskId,
+                    StepTitle = existingStep.StepTitle,
+                    StepDescription = existingStep.StepDescription,
+                    StepOrder = existingStep.StepOrder,
+                    IsCompleted = existingStep.IsCompleted,
+                    CompletedDate = existingStep.CompletedDate,
+                    CreatedAt = existingStep.CreatedAt,
+                    UpdatedAt = existingStep.UpdatedAt
+                };
+
+                return Ok(responseDto);
             }
             catch (DbUpdateConcurrencyException ex)
             {

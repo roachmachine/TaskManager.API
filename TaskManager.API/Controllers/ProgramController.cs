@@ -36,7 +36,7 @@ namespace TaskManager.API.Controllers
         {
             try
             {
-                var query = _context.Programs.Where(p => p.IsActive);
+                var query = _context.OrgPrograms.Where(p => !p.IsDeleted);
 
                 if (organizationId.HasValue)
                 {
@@ -53,19 +53,20 @@ namespace TaskManager.API.Controllers
 
                 var programDtos = programs.Select(p => new ProgramResponseDto
                 {
-                    ProgramId = p.ProgramId,
+                    ProgramId = p.OrgProgramId,
                     ProgramName = p.ProgramName,
                     OrganizationId = p.OrganizationId,
-                    IsActive = p.IsActive,
-                    CreateDate = p.CreateDate,
-                    UpdateDate = p.UpdateDate,
-                    Organization = p.Organization != null ? new OrganizationDto
+                    IsDeleted = p.IsDeleted,
+                    CreatedAt = p.CreatedAt,
+                    UpdatedAt = p.UpdatedAt,
+                    Organization = p.Organization != null ? new OrganizationResponseDto
                     {
                         OrganizationId = p.Organization.OrganizationId,
                         OrganizationName = p.Organization.OrganizationName,
-                        IsActive = p.Organization.IsActive,
-                        CreateDate = p.Organization.CreateDate,
-                        UpdateDate = p.Organization.UpdateDate
+                        ImageUrl = p.Organization.ImageUrl,
+                        IsDeleted = p.Organization.IsDeleted,
+                        CreatedAt = p.Organization.CreatedAt,
+                        UpdatedAt = p.Organization.UpdatedAt
                     } : null
                 }).ToList();
 
@@ -100,9 +101,9 @@ namespace TaskManager.API.Controllers
         {
             try
             {
-                var program = await _context.Programs
+                var program = await _context.OrgPrograms
                     .Include(p => p.Organization)
-                    .FirstOrDefaultAsync(p => p.ProgramId == id);
+                    .FirstOrDefaultAsync(p => p.OrgProgramId == id && !p.IsDeleted);
 
                 if (program == null)
                 {
@@ -112,19 +113,20 @@ namespace TaskManager.API.Controllers
 
                 var programDto = new ProgramResponseDto
                 {
-                    ProgramId = program.ProgramId,
+                    ProgramId = program.OrgProgramId,
                     ProgramName = program.ProgramName,
                     OrganizationId = program.OrganizationId,
-                    IsActive = program.IsActive,
-                    CreateDate = program.CreateDate,
-                    UpdateDate = program.UpdateDate,
-                    Organization = program.Organization != null ? new OrganizationDto
+                    IsDeleted = program.IsDeleted,
+                    CreatedAt = program.CreatedAt,
+                    UpdatedAt = program.UpdatedAt,
+                    Organization = program.Organization != null ? new OrganizationResponseDto
                     {
                         OrganizationId = program.Organization.OrganizationId,
                         OrganizationName = program.Organization.OrganizationName,
-                        IsActive = program.Organization.IsActive,
-                        CreateDate = program.Organization.CreateDate,
-                        UpdateDate = program.Organization.UpdateDate
+                        ImageUrl = program.Organization.ImageUrl,
+                        IsDeleted = program.Organization.IsDeleted,
+                        CreatedAt = program.Organization.CreatedAt,
+                        UpdatedAt = program.Organization.UpdatedAt
                     } : null
                 };
 
@@ -156,19 +158,31 @@ namespace TaskManager.API.Controllers
                     return BadRequest(ModelState);
                 }
 
-                var program = new ProgramModel
+                var program = new OrgProgram
                 {
                     ProgramName = programDto.ProgramName,
                     OrganizationId = programDto.OrganizationId,
-                    IsActive = true,
-                    CreateDate = DateTime.UtcNow,
-                    UpdateDate = DateTime.UtcNow
+                    IsDeleted = false,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    CreatedBy = 1,
+                    UpdatedBy = 1
                 };
 
-                _context.Programs.Add(program);
+                _context.OrgPrograms.Add(program);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(GetProgram), new { id = program.ProgramId }, program);
+                var responseDto = new ProgramResponseDto
+                {
+                    ProgramId = program.OrgProgramId,
+                    ProgramName = program.ProgramName,
+                    OrganizationId = program.OrganizationId,
+                    IsDeleted = program.IsDeleted,
+                    CreatedAt = program.CreatedAt,
+                    UpdatedAt = program.UpdatedAt
+                };
+
+                return CreatedAtAction(nameof(GetProgram), new { id = program.OrgProgramId }, responseDto);
             }
             catch (DbUpdateException ex)
             {
@@ -208,9 +222,9 @@ namespace TaskManager.API.Controllers
                     return BadRequest("Program ID mismatch");
                 }
 
-                var existingProgram = await _context.Programs.FindAsync(id);
+                var existingProgram = await _context.OrgPrograms.FindAsync(id);
 
-                if (existingProgram == null)
+                if (existingProgram == null || existingProgram.IsDeleted)
                 {
                     _logger.LogWarning("Program with ID {ProgramId} not found", id);
                     return NotFound($"Program with ID {id} not found");
@@ -218,12 +232,23 @@ namespace TaskManager.API.Controllers
 
                 existingProgram.ProgramName = programDto.ProgramName;
                 existingProgram.OrganizationId = programDto.OrganizationId;
-                existingProgram.IsActive = programDto.IsActive;
-                existingProgram.UpdateDate = DateTime.UtcNow;
+                existingProgram.IsDeleted = programDto.IsDeleted;
+                existingProgram.UpdatedAt = DateTime.UtcNow;
+                existingProgram.UpdatedBy = 1;
 
                 await _context.SaveChangesAsync();
 
-                return Ok(existingProgram);
+                var responseDto = new ProgramResponseDto
+                {
+                    ProgramId = existingProgram.OrgProgramId,
+                    ProgramName = existingProgram.ProgramName,
+                    OrganizationId = existingProgram.OrganizationId,
+                    IsDeleted = existingProgram.IsDeleted,
+                    CreatedAt = existingProgram.CreatedAt,
+                    UpdatedAt = existingProgram.UpdatedAt
+                };
+
+                return Ok(responseDto);
             }
             catch (DbUpdateConcurrencyException ex)
             {
@@ -243,7 +268,7 @@ namespace TaskManager.API.Controllers
         }
 
         /// <summary>
-        /// Delete a program (soft delete - marks as inactive)
+        /// Delete a program (soft delete - marks as deleted)
         /// </summary>
         /// <param name="id">Program ID</param>
         /// <returns>No content</returns>
@@ -256,16 +281,17 @@ namespace TaskManager.API.Controllers
         {
             try
             {
-                var program = await _context.Programs.FindAsync(id);
+                var program = await _context.OrgPrograms.FindAsync(id);
 
-                if (program == null)
+                if (program == null || program.IsDeleted)
                 {
                     _logger.LogWarning("Program with ID {ProgramId} not found", id);
                     return NotFound($"Program with ID {id} not found");
                 }
 
-                program.IsActive = false;
-                program.UpdateDate = DateTime.UtcNow;
+                program.IsDeleted = true;
+                program.UpdatedAt = DateTime.UtcNow;
+                program.UpdatedBy = 1;
 
                 await _context.SaveChangesAsync();
 

@@ -6,30 +6,21 @@ using Microsoft.EntityFrameworkCore;
 
 namespace TaskManager.API.Models;
 
-public partial class TaskStep
+[Table("OrgProgram")]
+public partial class OrgProgram
 {
     [Key]
-    [Column("TaskStepID")]
-    public int TaskStepId { get; set; }
+    [Column("OrgProgramID")]
+    public int OrgProgramId { get; set; }
 
-    [Column("UserTaskID")]
-    public int UserTaskId { get; set; }
-
-    [StringLength(200)]
-    public string StepTitle { get; set; } = null!;
-
-    [StringLength(1000)]
-    public string? StepDescription { get; set; }
+    [StringLength(100)]
+    public string ProgramName { get; set; } = null!;
 
     [StringLength(500)]
     public string? ImageUrl { get; set; }
 
-    public int StepOrder { get; set; }
-
-    public bool IsCompleted { get; set; }
-
-    [Precision(3)]
-    public DateTime? CompletedDate { get; set; }
+    [Column("OrganizationID")]
+    public int OrganizationId { get; set; }
 
     public bool IsDeleted { get; set; }
 
@@ -44,25 +35,28 @@ public partial class TaskStep
     [Precision(3)]
     public DateTime UpdatedAt { get; set; }
 
+    public byte[] RowVersion { get; set; } = null!;
+
     public int CreatedBy { get; set; }
 
     public int UpdatedBy { get; set; }
 
-    public byte[] RowVersion { get; set; } = null!;
-
     [ForeignKey("CreatedBy")]
-    [InverseProperty("TaskStepCreatedByNavigations")]
+    [InverseProperty("OrgProgramCreatedByNavigations")]
     public virtual User CreatedByNavigation { get; set; } = null!;
 
     [ForeignKey("DeletedBy")]
-    [InverseProperty("TaskStepDeletedByNavigations")]
+    [InverseProperty("OrgProgramDeletedByNavigations")]
     public virtual User? DeletedByNavigation { get; set; }
 
+    [ForeignKey("OrganizationId")]
+    [InverseProperty("OrgPrograms")]
+    public virtual Organization Organization { get; set; } = null!;
+
     [ForeignKey("UpdatedBy")]
-    [InverseProperty("TaskStepUpdatedByNavigations")]
+    [InverseProperty("OrgProgramUpdatedByNavigations")]
     public virtual User UpdatedByNavigation { get; set; } = null!;
 
-    [ForeignKey("UserTaskId")]
-    [InverseProperty("TaskSteps")]
-    public virtual UserTask UserTask { get; set; } = null!;
+    [InverseProperty("OrgProgram")]
+    public virtual ICollection<User> Users { get; set; } = new List<User>();
 }

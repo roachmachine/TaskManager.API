@@ -25,6 +25,6 @@ namespace TaskManager.API.DTOs
 
         public string UserType { get; set; } = null!;
 
-        public DateTime CreateDate { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
 }

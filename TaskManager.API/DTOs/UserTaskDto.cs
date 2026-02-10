@@ -11,6 +11,9 @@ namespace TaskManager.API.DTOs
         [StringLength(1000, ErrorMessage = "Task description cannot exceed 1000 characters")]
         public string? TaskDescription { get; set; }
 
+        [StringLength(500, ErrorMessage = "Image URL cannot exceed 500 characters")]
+        public string? ImageUrl { get; set; }
+
         [Required(ErrorMessage = "Local time is required")]
         public TimeOnly LocalTime { get; set; }
 
@@ -37,6 +40,9 @@ namespace TaskManager.API.DTOs
         [StringLength(1000, ErrorMessage = "Task description cannot exceed 1000 characters")]
         public string? TaskDescription { get; set; }
 
+        [StringLength(500, ErrorMessage = "Image URL cannot exceed 500 characters")]
+        public string? ImageUrl { get; set; }
+
         [Required(ErrorMessage = "Local time is required")]
         public TimeOnly LocalTime { get; set; }
 
@@ -50,8 +56,8 @@ namespace TaskManager.API.DTOs
 
         public int? RecurrenceId { get; set; }
 
-        [Required(ErrorMessage = "IsActive status is required")]
-        public bool IsActive { get; set; }
+        [Required(ErrorMessage = "IsDeleted status is required")]
+        public bool IsDeleted { get; set; }
     }
 
     public class UserTaskResponseDto
@@ -61,6 +67,8 @@ namespace TaskManager.API.DTOs
         public string TaskName { get; set; } = null!;
 
         public string? TaskDescription { get; set; }
+
+        public string? ImageUrl { get; set; }
 
         public TimeOnly LocalTime { get; set; }
 
@@ -72,11 +80,11 @@ namespace TaskManager.API.DTOs
 
         public int? RecurrenceId { get; set; }
 
-        public bool IsActive { get; set; }
+        public bool IsDeleted { get; set; }
 
-        public DateTime CreatedDate { get; set; }
+        public DateTime CreatedAt { get; set; }
 
-        public DateTime UpdateDate { get; set; }
+        public DateTime UpdatedAt { get; set; }
 
         public UserResponseDto? User { get; set; }
 

@@ -36,7 +36,7 @@ namespace TaskManager.API.Controllers
         {
             try
             {
-                var query = _context.UserTasks.Where(ut => ut.IsActive);
+                var query = _context.UserTasks.Where(ut => !ut.IsDeleted);
 
                 if (userId.HasValue)
                 {
@@ -63,21 +63,20 @@ namespace TaskManager.API.Controllers
                     EndDate = t.EndDate,
                     UserId = t.UserId,
                     RecurrenceId = t.RecurrenceId,
-                    IsActive = t.IsActive,
-                    CreatedDate = t.CreatedDate,
-                    UpdateDate = t.UpdateDate,
+                    IsDeleted = t.IsDeleted,
+                    CreatedAt = t.CreatedAt,
+                    UpdatedAt = t.UpdatedAt,
                     User = t.User != null ? new UserResponseDto
                     {
                         UserId = t.User.UserId,
                         UserName = t.User.UserName,
                         Email = t.User.Email,
                         UserTypeId = t.User.UserTypeId,
-                        OrganizationId = t.User.OrganizationId,
-                        ProgramId = t.User.ProgramId,
+                        OrgProgramId = t.User.OrgProgramId,
                         TimeZoneId = t.User.TimeZoneId,
-                        IsActive = t.User.IsActive,
-                        CreateDate = t.User.CreateDate,
-                        UpdateDate = t.User.UpdateDate
+                        IsDeleted = t.User.IsDeleted,
+                        CreatedAt = t.User.CreatedAt,
+                        UpdatedAt = t.User.UpdatedAt
                     } : null,
                     Recurrence = t.Recurrence != null ? new TaskRecurrenceResponseDto
                     {
@@ -85,7 +84,7 @@ namespace TaskManager.API.Controllers
                         RecurrenceType = t.Recurrence.RecurrenceType,
                         IntervalDays = t.Recurrence.IntervalDays,
                         RecurrenceEndDate = t.Recurrence.RecurrenceEndDate,
-                        CreatedDate = t.Recurrence.CreatedDate
+                        CreatedAt = t.Recurrence.CreatedAt
                     } : null,
                     TaskSteps = t.TaskSteps.Select(ts => new TaskStepResponseDto
                     {
@@ -96,8 +95,8 @@ namespace TaskManager.API.Controllers
                         StepOrder = ts.StepOrder,
                         IsCompleted = ts.IsCompleted,
                         CompletedDate = ts.CompletedDate,
-                        CreatedDate = ts.CreatedDate,
-                        UpdateDate = ts.UpdateDate
+                        CreatedAt = ts.CreatedAt,
+                        UpdatedAt = ts.UpdatedAt
                     }).ToList()
                 }).ToList();
 
@@ -154,21 +153,20 @@ namespace TaskManager.API.Controllers
                     EndDate = task.EndDate,
                     UserId = task.UserId,
                     RecurrenceId = task.RecurrenceId,
-                    IsActive = task.IsActive,
-                    CreatedDate = task.CreatedDate,
-                    UpdateDate = task.UpdateDate,
+                    IsDeleted = task.IsDeleted,
+                    CreatedAt = task.CreatedAt,
+                    UpdatedAt = task.UpdatedAt,
                     User = task.User != null ? new UserResponseDto
                     {
                         UserId = task.User.UserId,
                         UserName = task.User.UserName,
                         Email = task.User.Email,
                         UserTypeId = task.User.UserTypeId,
-                        OrganizationId = task.User.OrganizationId,
-                        ProgramId = task.User.ProgramId,
+                        OrgProgramId = task.User.OrgProgramId,
                         TimeZoneId = task.User.TimeZoneId,
-                        IsActive = task.User.IsActive,
-                        CreateDate = task.User.CreateDate,
-                        UpdateDate = task.User.UpdateDate
+                        IsDeleted = task.User.IsDeleted,
+                        CreatedAt = task.User.CreatedAt,
+                        UpdatedAt = task.User.UpdatedAt
                     } : null,
                     Recurrence = task.Recurrence != null ? new TaskRecurrenceResponseDto
                     {
@@ -176,7 +174,7 @@ namespace TaskManager.API.Controllers
                         RecurrenceType = task.Recurrence.RecurrenceType,
                         IntervalDays = task.Recurrence.IntervalDays,
                         RecurrenceEndDate = task.Recurrence.RecurrenceEndDate,
-                        CreatedDate = task.Recurrence.CreatedDate
+                        CreatedAt = task.Recurrence.CreatedAt
                     } : null,
                     TaskSteps = task.TaskSteps.Select(ts => new TaskStepResponseDto
                     {
@@ -187,8 +185,8 @@ namespace TaskManager.API.Controllers
                         StepOrder = ts.StepOrder,
                         IsCompleted = ts.IsCompleted,
                         CompletedDate = ts.CompletedDate,
-                        CreatedDate = ts.CreatedDate,
-                        UpdateDate = ts.UpdateDate
+                        CreatedAt = ts.CreatedAt,
+                        UpdatedAt = ts.UpdatedAt
                     }).ToList()
                 };
 
@@ -229,15 +227,31 @@ namespace TaskManager.API.Controllers
                     EndDate = taskDto.EndDate,
                     UserId = taskDto.UserId,
                     RecurrenceId = taskDto.RecurrenceId,
-                    IsActive = true,
-                    CreatedDate = DateTime.UtcNow,
-                    UpdateDate = DateTime.UtcNow
+                    IsDeleted = false,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
                 };
 
                 _context.UserTasks.Add(task);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(GetUserTask), new { id = task.UserTaskId }, task);
+                // Map entity to response DTO
+                var responseDto = new UserTaskResponseDto
+                {
+                    UserTaskId = task.UserTaskId,
+                    TaskName = task.TaskName,
+                    TaskDescription = task.TaskDescription,
+                    LocalTime = task.LocalTime,
+                    StartDate = task.StartDate,
+                    EndDate = task.EndDate,
+                    UserId = task.UserId,
+                    RecurrenceId = task.RecurrenceId,
+                    IsDeleted = task.IsDeleted,
+                    CreatedAt = task.CreatedAt,
+                    UpdatedAt = task.UpdatedAt
+                };
+
+                return CreatedAtAction(nameof(GetUserTask), new { id = task.UserTaskId }, responseDto);
             }
             catch (DbUpdateException ex)
             {
@@ -292,8 +306,8 @@ namespace TaskManager.API.Controllers
                 existingTask.EndDate = taskDto.EndDate;
                 existingTask.UserId = taskDto.UserId;
                 existingTask.RecurrenceId = taskDto.RecurrenceId;
-                existingTask.IsActive = taskDto.IsActive;
-                existingTask.UpdateDate = DateTime.UtcNow;
+                existingTask.IsDeleted = taskDto.IsDeleted;
+                existingTask.UpdatedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
 
@@ -338,8 +352,8 @@ namespace TaskManager.API.Controllers
                     return NotFound($"User task with ID {id} not found");
                 }
 
-                task.IsActive = false;
-                task.UpdateDate = DateTime.UtcNow;
+                task.IsDeleted = true;
+                task.UpdatedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
 

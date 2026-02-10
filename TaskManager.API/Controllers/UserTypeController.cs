@@ -46,7 +46,7 @@ namespace TaskManager.API.Controllers
                 {
                     UserTypeId = ut.UserTypeId,
                     UserType = ut.UserType1,
-                    CreateDate = ut.CreateDate
+                    CreatedAt = ut.CreatedAt
                 }).ToList();
 
                 var response = new PaginatedResponseDto<UserTypeResponseDto>
@@ -92,7 +92,7 @@ namespace TaskManager.API.Controllers
                 {
                     UserTypeId = userType.UserTypeId,
                     UserType = userType.UserType1,
-                    CreateDate = userType.CreateDate
+                    CreatedAt = userType.CreatedAt
                 };
 
                 return Ok(userTypeDto);
@@ -123,10 +123,16 @@ namespace TaskManager.API.Controllers
                     return BadRequest(ModelState);
                 }
 
+                // Additional validation for empty or whitespace strings
+                if (string.IsNullOrWhiteSpace(userTypeDto.UserType))
+                {
+                    return BadRequest("User type name cannot be empty or whitespace");
+                }
+
                 var userType = new UserType
                 {
                     UserType1 = userTypeDto.UserType,
-                    CreateDate = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow
                 };
 
                 _context.UserTypes.Add(userType);
@@ -165,6 +171,12 @@ namespace TaskManager.API.Controllers
                 if (!ModelState.IsValid)
                 {
                     return BadRequest(ModelState);
+                }
+
+                // Additional validation for empty or whitespace strings
+                if (string.IsNullOrWhiteSpace(userTypeDto.UserType))
+                {
+                    return BadRequest("User type name cannot be empty or whitespace");
                 }
 
                 if (id != userTypeDto.UserTypeId)

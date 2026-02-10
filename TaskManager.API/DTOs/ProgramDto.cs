@@ -5,7 +5,7 @@ namespace TaskManager.API.DTOs
     public class CreateProgramDto
     {
         [Required(ErrorMessage = "Program name is required")]
-        [StringLength(100, MinimumLength = 1, ErrorMessage = "Program name must be between 1 and 100 characters")]
+        [StringLength(255, MinimumLength = 1, ErrorMessage = "Program name must be between 1 and 255 characters")]
         public string ProgramName { get; set; } = null!;
 
         [Required(ErrorMessage = "Organization ID is required")]
@@ -18,30 +18,30 @@ namespace TaskManager.API.DTOs
         public int ProgramId { get; set; }
 
         [Required(ErrorMessage = "Program name is required")]
-        [StringLength(100, MinimumLength = 1, ErrorMessage = "Program name must be between 1 and 100 characters")]
+        [StringLength(255, MinimumLength = 1, ErrorMessage = "Program name must be between 1 and 255 characters")]
         public string ProgramName { get; set; } = null!;
 
         [Required(ErrorMessage = "Organization ID is required")]
         public int OrganizationId { get; set; }
 
-        [Required(ErrorMessage = "IsActive status is required")]
-        public bool IsActive { get; set; }
+        [Required(ErrorMessage = "IsDeleted status is required")]
+        public bool IsDeleted { get; set; }
     }
 
     public class ProgramResponseDto
     {
         public int ProgramId { get; set; }
 
-        public string ProgramName { get; set; } = null!;
-
         public int OrganizationId { get; set; }
 
-        public bool IsActive { get; set; }
+        public string ProgramName { get; set; } = null!;
 
-        public DateTime CreateDate { get; set; }
+        public bool IsDeleted { get; set; }
 
-        public DateTime UpdateDate { get; set; }
+        public DateTime CreatedAt { get; set; }
 
-        public OrganizationDto? Organization { get; set; }
+        public DateTime UpdatedAt { get; set; }
+
+        public OrganizationResponseDto? Organization { get; set; }
     }
 }

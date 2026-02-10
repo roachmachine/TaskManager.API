@@ -41,7 +41,7 @@ namespace TaskManager.API.DTOs
 
         public DateOnly? RecurrenceEndDate { get; set; }
 
-        public DateTime CreatedDate { get; set; }
+        public DateTime CreatedAt { get; set; }
 
         public ICollection<TaskRecurrenceDayResponseDto> TaskRecurrenceDays { get; set; } = new List<TaskRecurrenceDayResponseDto>();
     }
