@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using TaskManager.API.Models;
 
 namespace TaskManager.API.DTOs
 {
@@ -41,5 +42,7 @@ namespace TaskManager.API.DTOs
         public DateTime CreatedAt { get; set; }
 
         public DateTime UpdatedAt { get; set; }
+
+        public ICollection<OrgProgramResponseDto> OrgPrograms { get; set; } = new List<OrgProgramResponseDto>();
     }
 }

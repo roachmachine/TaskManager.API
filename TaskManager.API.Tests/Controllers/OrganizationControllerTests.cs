@@ -180,7 +180,7 @@ namespace TaskManager.API.Tests.Controllers
             okResult.Should().NotBeNull();
             okResult!.StatusCode.Should().Be(200);
 
-            var organization = okResult.Value as Organization;
+            var organization = okResult.Value as OrganizationResponseDto;
             organization.Should().NotBeNull();
             organization!.OrganizationId.Should().Be(1);
             organization.OrganizationName.Should().Be("Acme Corporation");
@@ -226,7 +226,7 @@ namespace TaskManager.API.Tests.Controllers
 
             // Assert
             var okResult = result.Result as OkObjectResult;
-            var organization = okResult!.Value as Organization;
+            var organization = okResult!.Value as OrganizationResponseDto;
             
             organization.Should().NotBeNull();
             organization!.OrgPrograms.Should().HaveCount(1);

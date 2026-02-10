@@ -80,7 +80,7 @@ namespace TaskManager.API.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]       
-        public async Task<ActionResult<Organization>> GetOrganization(int id, bool includePrograms)
+        public async Task<ActionResult<OrganizationResponseDto>> GetOrganization(int id, bool includePrograms)
         {
             try
             {
@@ -100,7 +100,29 @@ namespace TaskManager.API.Controllers
                     return NotFound($"Organization with ID {id} not found");
                 }
 
-                return Ok(organization);
+                var dto = new OrganizationResponseDto
+                {
+                    OrganizationId = organization.OrganizationId,
+                    OrganizationName = organization.OrganizationName,
+                    ImageUrl = organization.ImageUrl,
+                    IsDeleted = organization.IsDeleted,
+                    CreatedAt = organization.CreatedAt,
+                    UpdatedAt = organization.UpdatedAt,
+                };
+
+                if (includePrograms)
+                {
+                    dto.OrgPrograms = organization.OrgPrograms.Select(p => new OrgProgramResponseDto
+                    {
+                        OrgProgramId = p.OrgProgramId,
+                        ProgramName = p.ProgramName,
+                        IsDeleted = p.IsDeleted,
+                        CreatedAt = p.CreatedAt,
+                        UpdatedAt = p.UpdatedAt
+                    }).ToList();
+                }
+
+                return Ok(dto);
             }
             catch (Exception ex)
             {
